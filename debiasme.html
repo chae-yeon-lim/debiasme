@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeBiasMe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Base Styles */
+    :root {
+      --color-background: #1e293b;
+      --color-surface: #2d3748;
+      --color-text: #f8fafc;
+      --color-primary: #3b82f6; /* Light blue primary color */
+      --color-primary-light: #60a5fa;
+      --color-primary-dark: #2563eb; /* Darker blue for buttons */
+      --color-secondary: #94a3b8;
+      --color-success: #10b981;
+      --color-warning: #facc15;
+      --color-warning-bg: rgba(250, 204, 21, 0.3);
+      --color-highlight-yellow: rgba(250, 204, 21, 0.3);
+      --color-highlight-green: rgba(34, 197, 94, 0.3);
+      --color-highlight-text: #facc15;
+      --color-highlight-success: #10b981;
+      --color-statistical: #60a5fa; /* Blue for statistical bias */
+      --color-systemic: #93c5fd; /* Lighter blue for systemic bias */
+      --border-radius: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--color-background);
+      color: var(--color-text);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .main-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    header h1 {
+      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--color-secondary);
+    }
+    
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .app-message {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--color-secondary);
+      background-color: rgba(148, 163, 184, 0.1);
+      padding: 8px;
+      border-radius: var(--border-radius);
+    }
+    
+    .chat-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      min-height: 600px;
+      transition: all 0.3s ease;
+    }
+    
+    .chat-container.with-map {
+      grid-template-columns: 1fr 450px;
+    }
+    
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      background-color: var(--color-surface);
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      height: calc(100vh - 200px);
+    }
+    
+    #conversation-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .message {
+      max-width: 85%;
+      margin-bottom: 16px;
+      padding: 16px;
+      border-radius: var(--border-radius);
+      animation: message-appear 0.3s ease-out;
+    }
+    
+    .user-message {
+      background-color: #3b82f6; /* Changed to blue from purple */
+      color: white;
+      align-self: flex-end;
+      border-top-right-radius: 2px;
+    }
+    
+    .ai-message {
+      background-color: #374151;
+      color: var(--color-text);
+      align-self: flex-start;
+      border-top-left-radius: 2px;
+      position: relative;
+    }
+    
+    .input-section {
+      padding: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: #2d3748;
+    }
+    
+    .prompt-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    select, textarea, button {
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      padding: 16px;
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--color-text);
+    }
+    
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 1em;
+      padding-right: 2.5rem;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 80px;
+      resize: vertical;
+    }
+    
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+    
+    button {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .primary-button {
+      background-color: var(--color-primary); /* Restore original blue color */
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+    }
+    
+    .primary-button:hover {
+      background-color: var(--color-primary-dark); /* Original hover color */
+    }
+    
+    .secondary-button {
+      background-color: #4b5563;
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+    }
+    
+    .secondary-button:hover {
+      background-color: #374151;
+    }
+    
+    .button-container {
+      display: flex;
+      gap: 16px;
+    }
+    
+    .button-container button {
+      flex: 1;
+    }
+    
+    .send-button {
+      background-color: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      height: 48px;
+    }
+    
+    .send-button:hover {
+      background-color: var(--color-primary-dark);
+    }
+
+    .send-button svg {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .highlighted-text {
+      background-color: var(--color-highlight-yellow);
+      padding: 2px 4px;
+      border-radius: 3px;
+      border-bottom: 2px solid var(--color-highlight-text);
+    }
+    
+    .highlighted-text.improved {
+      background-color: var(--color-highlight-green);
+      border-bottom: 2px solid var(--color-highlight-success);
+    }
+    
+    #bias-popup {
+      position: absolute;
+      background-color: #1a202c;
+      border-radius: 8px;
+      width: 300px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      z-index: 1001;
+      border: 1px solid rgba(95, 120, 249, 0.3);
+      overflow: hidden;
+      display: none;
+    }
+    
+    .bias-popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background-color: #242f42;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .bias-popup-header h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #ffffff;
+    }
+    
+    .bias-popup-content {
+      padding: 14px;
+    }
+    
+    .bias-type {
+      background-color: rgba(250, 204, 21, 0.1);
+      border-left: 3px solid #facc15;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+    }
+    
+    .bias-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      justify-content: center;
+    }
+    
+    .action-button {
+      background-color: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+    }
+    
+    .action-button:hover {
+      background-color: var(--color-primary-dark);
+    }
+    
+    .bias-map-container {
+      background-color: var(--color-surface);
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0;
+      display: none;
+      flex-direction: column;
+      height: calc(100vh - 200px);
+      overflow: hidden;
+      position: relative; /* Add this to create a positioning context */
+    }
+    
+    .map-header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .map-header-left {
+      display: flex;
+      align-items: center;
+    }
+    
+    .bias-map-container h3 {
+      color: var(--color-primary);
+      margin-bottom: 0;
+      font-size: 1.3rem;
+    }
+    
+    .help-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: rgba(59, 130, 246, 0.2);
+      color: var(--color-primary);
+      font-size: 14px;
+      font-weight: bold;
+      margin-left: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .help-button:hover {
+      background-color: rgba(59, 130, 246, 0.3);
+    }
+    
+    .map-instruction {
+      color: var(--color-secondary);
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    
+    #bias-map {
+      flex: 1;
+      min-height: 400px;
+      border-radius: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .map-legend {
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: 12px 16px;
+      margin: 0;
+    }
+    
+    .legend-section {
+      margin-bottom: 12px;
+    }
+    
+    .legend-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding-left: 16px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    
+    .legend-color.dotted {
+      background-color: transparent;
+      border: 2px dotted #7acb85;
+    }
+    
+    .legend-color.solid {
+      background-color: rgba(245, 215, 110, 0.8);
+    }
+    
+    /* Bias Term Styling */
+    .bias-term {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .bias-term:hover {
+      background-color: var(--color-highlight-yellow);
+    }
+
+    .bias-term.highlighted {
+      background-color: var(--color-highlight-yellow);
+    }
+    
+    /* Dialog styling */
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.75);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    
+    .dialog-content {
+      background-color: #1a202c;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      animation: dialog-appear 0.3s ease-out;
+      border: 1px solid rgba(96, 165, 250, 0.2);
+    }
+    
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: #171c27;
+    }
+    
+    .dialog-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #f8fafc;
+      font-weight: 600;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    
+    .close-button {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s ease;
+    }
+    
+    .close-button:hover {
+      color: #f9fafb;
+    }
+    
+    .dialog-body {
+      padding: 20px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    
+    .dialog-footer {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: #171c27;
+    }
+    
+    .dialog-section {
+      margin-bottom: 24px;
+    }
+    
+    .dialog-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .dialog-section h4 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+    
+    .identified-phrase {
+      background-color: rgba(250, 204, 21, 0.2);
+      border-radius: 6px;
+      padding: 16px;
+      font-style: italic;
+      margin-bottom: 12px;
+      border-left: 3px solid #facc15;
+    }
+    
+    .bias-suggestion {
+      background-color: rgba(34, 197, 94, 0.1);
+      border-radius: 6px;
+      padding: 16px;
+      font-style: italic;
+      margin-bottom: 12px;
+      border-left: 3px solid #10b981;
+    }
+    
+    .bias-reflection {
+      background-color: #1e293b;
+      padding: 16px;
+      border-radius: 6px;
+    }
+    
+    .bias-reflection p:first-child {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    
+    .bias-reflection p strong {
+      color: var(--color-primary);
+    }
+    
+    .bias-reflection ul {
+      margin-top: 5px;
+      margin-bottom: 15px;
+      padding-left: 25px;
+    }
+    
+    .bias-reflection li {
+      margin-bottom: 5px;
+    }
+    
+    /* Map tooltip - expanded view */
+    .map-tooltip {
+      position: absolute;
+      background-color: #1a202c;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(95, 120, 249, 0.3);
+      max-width: 320px;
+      padding: 16px;
+      font-size: 0.9rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 150;
+    }
+    
+    /* Downward arrow for showing transition between biased and improved phrases */
+    .arrow-down {
+      width: 0; 
+      height: 0; 
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-top: 20px solid #3b82f6; /* Blue arrow */
+      margin: 8px auto;
+    }
+    
+    .map-tooltip.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .map-tooltip h4 {
+      color: var(--color-primary);
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+    
+    .map-tooltip .identified-phrase {
+      font-style: italic;
+      background-color: rgba(250, 204, 21, 0.2);
+      padding: 12px;
+      border-radius: 4px;
+      margin: 8px 0;
+      border-left: 3px solid #facc15;
+    }
+    
+    .map-tooltip h5 {
+      color: #60a5fa;
+      margin: 12px 0 6px 0;
+      font-size: 0.9rem;
+    }
+    
+    .map-tooltip p {
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    
+    .map-tooltip ul {
+      list-style-type: disc;
+      padding-left: 20px;
+      margin: 8px 0;
+    }
+    
+    .map-tooltip li {
+      margin-bottom: 4px;
+      font-size: 0.85rem;
+    }
+    
+    .map-tooltip-footer {
+      display: flex;
+      justify-content: flex-end;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 12px;
+      padding-top: 8px;
+    }
+    
+    .map-tooltip-close {
+      background-color: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    
+    .map-tooltip-close:hover {
+      background-color: var(--color-primary-dark);
+    }
+    
+    /* Category popup */
+    .category-popup, .subcategory-popup {
+      position: absolute;
+      display: none;
+      background-color: #1a202c;
+      border-radius: 8px;
+      padding: 10px;
+      width: 250px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(95, 120, 249, 0.3);
+      z-index: 1000;
+    }
+    
+    /* Bias info box */
+    .bias-info-box {
+      background-color: #1a202c;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 12px 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(95, 120, 249, 0.3);
+      z-index: 2000; /* Ensure it appears above everything else */
+    }
+    
+    /* SVG Map styling */
+    #svg-bias-map {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    
+    /* Animation for bias map circles */
+    @keyframes pulseGlow {
+      0% { filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3)); }
+      50% { filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.5)); }
+      100% { filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.3)); }
+    }
+    
+    .bias-node {
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .bias-node:hover {
+      animation: pulseGlow 2s infinite;
+    }
+    
+    .bias-node.active {
+      filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.7));
+    }
+    
+    /* Section labels for bias map */
+    .section-label {
+      font-size: 1.5rem;
+      font-weight: 600;
+      filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.6));
+      pointer-events: none;
+      opacity: 0.3;
+    }
+    
+    .footer {
+      margin: 0;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--color-secondary);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .chat-container.with-map {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 400px;
+        height: auto;
+      }
+      
+      .bias-map-container {
+        height: 400px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .button-container {
+        flex-direction: column;
+      }
+      
+      header h1 {
+        font-size: 2rem;
+      }
+    }
+    
+    /* Overlay styling for highlighting text */
+    .text-highlight-overlay {
+      position: absolute;
+      pointer-events: none;
+      z-index: 5;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 16px;
+    }
+    
+    /* Bias Categories Help Dialog */
+    #bias-categories-info {
+      position: absolute;
+      top: 60px;
+      right: 16px;
+      background-color: #1a202c;
+      border-radius: 8px;
+      padding: 16px;
+      width: 320px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(95, 120, 249, 0.3);
+      z-index: 200;
+      display: none;
+    }
+    
+    .bias-category-description {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .bias-category-description:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    
+    .bias-category-description h4 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+    
+    .bias-category-description p {
+      font-size: 0.9rem;
+      color: var(--color-secondary);
+      line-height: 1.5;
+    }
+    
+    /* Loading animation */
+    #loading-indicator {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    
+    .thinking {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--color-primary);
+      margin: 0 4px;
+      display: inline-block;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+    
+    .dot:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+    
+    .dot:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+    
+    /* Small Loading Popup */
+    .small-loading-popup {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(26, 32, 44, 0.9);
+      border-radius: 16px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 2000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      animation: fade-in 0.3s ease;
+      display: none;
+    }
+    
+    .small-loading-popup .thinking {
+      margin-bottom: 0;
+    }
+    
+    .small-loading-popup .dot {
+      width: 8px;
+      height: 8px;
+    }
+    
+    .small-loading-popup p {
+      color: var(--color-text);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+    
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+    
+    @keyframes dialog-appear {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes message-appear {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Small button styling for the "Got it" button in info box */
+    .small-button {
+      background-color: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    
+    .small-button:hover {
+      background-color: var(--color-primary-dark);
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <header>
+      <h1>DeBiasMe</h1>
+      <p>Identify and understand bias in AI interactions</p>
+    </header>
+    
+    <div class="app-container initial-state">
+      <div class="app-message">
+        This tool is powered by AI and is under development. AI may not always get it right. Please use your best judgment.
+      </div>
+      
+      <div class="chat-container">
+        <!-- Left side: Chat area -->
+        <div class="chat-area">
+          <div id="conversation-container">
+            <!-- Will be populated with messages -->
+          </div>
+          
+          <div class="input-section">
+            <div class="prompt-controls">
+              <select id="example-select">
+                <option value="">-- Select an example prompt --</option>
+                <option value="anchoring_example" selected>"I heard that AI will make most jobs obsolete by 2030. What's the future of work?"</option>
+              </select>
+              <div class="input-container">
+                <textarea id="user-input" placeholder="Type your prompt here or select an example above...">I heard that AI will make most jobs obsolete by 2030. What's the future of work?</textarea>
+                <div class="button-container">
+                  <button id="detect-button" class="primary-button">Detect Bias</button>
+                  <button id="send-button" class="send-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Right side: Bias map -->
+        <div class="bias-map-container">
+          <div class="map-header">
+            <div class="map-header-left">
+              <h3>Bias Map</h3>
+              <div id="map-help-button" class="help-button">?</div>
+            </div>
+            <div id="bias-categories-info">
+              <div class="bias-category-description">
+                <h4 style="color: #7acb85;">Human Bias</h4>
+                <p>Cognitive biases that affect how we perceive and interpret information about AI and technology. These are the mental shortcuts and patterns of thinking that can lead to inaccurate judgments.</p>
+              </div>
+              <div class="bias-category-description">
+                <h4 style="color: #5fb0d1;">Systemic Bias</h4>
+                <p>Biases that exist at institutional and structural levels, affecting how AI systems are developed and implemented. These biases reflect broader social patterns and power dynamics.</p>
+              </div>
+              <div class="bias-category-description">
+                <h4 style="color: #4287B7;">Statistical & Computational</h4>
+                <p>Biases that occur in data collection, analysis, and algorithmic systems. These include sampling biases, measurement errors, and issues with how AI systems process and interpret information.</p>
+              </div>
+              <button id="close-categories-info" class="small-button" style="margin-top: 10px; float: right;">Got it</button>
+            </div>
+          </div>
+          <p class="map-instruction" style="padding: 0 16px 16px 16px;">Explore the interaction between human and AI biases by clicking on each bias circle.</p>
+          <div id="bias-map">
+            <!-- SVG will be inserted here via JavaScript -->
+          </div>
+          <div class="map-legend">
+            <div class="legend-section">
+              <div class="legend-title">Bias Status</div>
+              <div class="legend-items">
+                <div class="legend-item">
+                  <span class="legend-color dotted"></span>
+                  <span>Addressed in Prompt</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color solid"></span>
+                  <span>Detected in Response</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2025 DeBiasMe Project | <a href="#" style="color: var(--color-primary-light);">Privacy Policy</a> | <a href="#" style="color: var(--color-primary-light);">Terms of Use</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading indicator -->
+  <div id="loading-indicator">
+    <div class="thinking">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <p>Analyzing response for bias patterns...</p>
+  </div>
+  
+  <!-- Small loading popup -->
+  <div id="small-loading-popup" class="small-loading-popup">
+    <div class="thinking">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <p>Processing your message...</p>
+  </div>
+  
+  <!-- Bias detection popup -->
+  <div id="bias-popup">
+    <div class="bias-popup-header">
+      <h3>Potential Bias Detected</h3>
+    </div>
+    <div class="bias-popup-content">
+      <div class="bias-type">
+        <strong>Anchoring Bias:</strong> Assuming a specific timeline (2030) for AI job displacement
+      </div>
+      <div class="bias-type">
+        <strong>Availability Bias:</strong> Relying on unspecified sources ("I heard that")
+      </div>
+      <div class="bias-actions">
+        <button id="learn-more-bias" class="action-button">Learn More</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Detailed bias info dialog -->
+  <div id="detailed-bias-info" class="dialog-overlay">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3>Anchoring & Availability Bias</h3>
+      </div>
+      <div class="dialog-body">
+        <div class="dialog-section">
+          <div class="identified-phrase">
+            <p><em>"I heard that AI will make most jobs obsolete by 2030."</em></p>
+          </div>
+          <div class="arrow-down"></div>
+<div class="bias-suggestion">
+  <p><em>"How might AI impact jobs in the coming decades, and what factors might influence these changes?"</em></p>
+</div>
+          <div class="bias-reflection">
+            <p>Take a moment to think about:</p>
+            <p><strong>Availability Bias:</strong></p>
+            <ul>
+              <li>What's the source of the "I heard that" information, and how reliable is it?</li>
+              <li>What evidence exists for both job displacement and creation?</li>
+            </ul>
+            <p><strong>Anchoring Bias:</strong></p>
+            <ul>
+              <li>What assumptions am I making about the rate and extent of AI adoption?</li>
+              <li>How might different job sectors be affected differently by AI?</li>
+              <li>Why focus on 2030 specifically, and what might this arbitrary timeline obscure?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button id="apply-changes" class="secondary-button">Apply Changes</button>
+        <button id="detailed-info-ok" class="primary-button">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elements
+      const exampleSelect = document.getElementById('example-select');
+      const userInput = document.getElementById('user-input');
+      const detectButton = document.getElementById('detect-button');
+      const sendButton = document.getElementById('send-button');
+      const conversationContainer = document.getElementById('conversation-container');
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const smallLoadingPopup = document.getElementById('small-loading-popup');
+      const biasMap = document.getElementById('bias-map');
+      const appContainer = document.querySelector('.app-container');
+      const chatContainer = document.querySelector('.chat-container');
+      const biasMapContainer = document.querySelector('.bias-map-container');
+      const mapHelpButton = document.getElementById('map-help-button');
+      const biasCategoriesInfo = document.getElementById('bias-categories-info');
+      const closeCategoriesInfo = document.getElementById('close-categories-info');
+      
+      // Popups and dialogs
+      const biasPopup = document.getElementById('bias-popup');
+      const learnMoreBias = document.getElementById('learn-more-bias');
+      
+      const detailedBiasInfo = document.getElementById('detailed-bias-info');
+      const detailedInfoOk = document.getElementById('detailed-info-ok');
+      const applyChanges = document.getElementById('apply-changes');
+      
+      // Track whether changes have been applied
+      let changesApplied = false;
+      
+      // New bias categories and types for the updated visualization
+      const biasCategories = {
+        'human': {
+          id: 'human',
+          name: 'Human Bias',
+          description: 'Cognitive biases that affect how individuals perceive and interpret information about AI and technology.'
+        },
+        'systemic': {
+          id: 'systemic',
+          name: 'Systemic',
+          description: 'Biases that exist at institutional and structural levels, affecting how AI systems are developed and implemented.'
+        },
+        'statistical': {
+          id: 'statistical',
+          name: 'Statistical & Computational',
+          description: 'Biases that occur in data collection, analysis, and interpretation, affecting the accuracy of AI predictions.'
+        }
+      };
+      
+      // Bias types based on the new visualization
+      const biasTypes = [
+        {
+          id: 'anchoring',
+          name: 'Anchoring',
+          category: 'human',
+          description: 'Anchoring bias occurs when we rely too heavily on the first piece of information encountered, such as a specific date or number, which then becomes an "anchor" that influences our judgment about subsequent information.',
+          problematic: [
+            'May lead to fixation on arbitrary timelines or specifics',
+            'Can narrow our perception of possible futures',
+            'Often takes attention away from more important factors',
+            'May create pessimistic or optimistic framing that skews analysis'
+          ],
+          nodeId: 'anchoring-node',
+          status: 'addressed' // This bias was identified and addressed in the prompt
+        },
+        {
+          id: 'availability',
+          name: 'Availability',
+          category: 'human',
+          description: 'Availability bias happens when we give disproportionate weight to information that comes readily to mind, such as recent news, dramatic events, or personal anecdotes, rather than seeking comprehensive evidence.',
+          problematic: [
+            'Prioritizes dramatic or recent information over systematic evidence',
+            'Often relies on second-hand sources without critical evaluation',
+            'May amplify sensationalist narratives about technology',
+            'Tends to overlook mundane but reliable information'
+          ],
+          nodeId: 'availability-node',
+          status: 'addressed' // This bias was identified and addressed in the prompt
+        },
+        {
+          id: 'confirmation',
+          name: 'Confirmation',
+          category: 'human',
+          description: 'Confirmation bias is the tendency to search for, interpret, favor, and recall information in a way that confirms or supports one\'s prior beliefs or values.',
+          problematic: [
+            'Leads to selectively seeking information that confirms existing views',
+            'Can ignore contradictory evidence and alternative perspectives',
+            'Creates reinforcing loops of self-affirming information',
+            'May prevent consideration of diverse outcomes and scenarios'
+          ],
+          nodeId: 'confirmation-node',
+          status: 'unaddressed' // This human bias was not addressed
+        },
+        {
+          id: 'historical',
+          name: 'Historical',
+          category: 'systemic',
+          description: 'Historical bias occurs when past data or patterns are assumed to accurately predict future ones, without accounting for fundamental differences in context or nature of AI development.',
+          problematic: [
+            'Overlooks unique characteristics of AI compared to previous technologies',
+            'Fails to consider different socioeconomic contexts',
+            'May lead to complacency about novel disruptions',
+            'Creates false equivalences between different time periods'
+          ],
+          nodeId: 'historical-node',
+          status: 'detected' // This bias was detected in the AI response
+        },
+        {
+          id: 'institutional',
+          name: 'Institutional',
+          category: 'systemic',
+          description: 'Institutional bias occurs when perspectives from dominant economic institutions are privileged over alternative viewpoints, particularly those of workers or marginalized communities.',
+          problematic: [
+            'Centers corporate interests in AI governance discussions',
+            'Minimizes voices from labor organizations and affected communities',
+            'Treats market-driven outcomes as inevitable rather than shaped by policy',
+            'Overlooks alternative economic frameworks for technological transition'
+          ],
+          nodeId: 'institutional-node',
+          status: 'detected' // This bias was detected in the AI response
+        },
+        {
+          id: 'societal',
+          name: 'Societal',
+          category: 'systemic',
+          description: 'Societal bias reflects broader social patterns, norms and relationships that influence how AI impacts are understood and distributed across society.',
+          problematic: [
+            'Tends to amplify existing social inequalities in technological access',
+            'Often ignores power dynamics in who controls AI development',
+            'May naturalize technological changes as inevitable rather than designed',
+            'Can overlook significant differences in how communities experience AI'
+          ],
+          nodeId: 'societal-node',
+          status: 'unaddressed' // This bias was not addressed
+        },
+        {
+          id: 'sampling',
+          name: 'Selection & Sampling',
+          category: 'statistical',
+          description: 'Sampling bias occurs when studies on AI\'s impact overrepresent certain sectors while underrepresenting others, or focus primarily on developed economies while excluding developing nations.',
+          problematic: [
+            'Generalizes findings from data-rich industries to all sectors',
+            'Underrepresents vulnerable populations most likely to face displacement',
+            'Fails to account for regional differences in economic structure',
+            'Excludes informal economic activities significant in many regions',
+            'Creates a false sense of universality in research conclusions'
+          ],
+          nodeId: 'sampling-node',
+          status: 'detected' // This bias was detected in the AI response
+        },
+        {
+          id: 'measurement',
+          name: 'Measurement',
+          category: 'statistical',
+          description: 'Measurement bias occurs when quantitative metrics are overemphasized while qualitative transformations are undervalued, or when metrics contain embedded assumptions about what counts as "work" or a "job."',
+          problematic: [
+            'Fails to capture how jobs evolve rather than disappear completely',
+            'Overlooks hard-to-quantify aspects of work like emotional labor',
+            'Relies on current job categories that may become obsolete',
+            'Often ignores non-economic values of work like meaning and purpose'
+          ],
+          nodeId: 'measurement-node',
+          status: 'detected' // This bias was detected in the AI response
+        },
+        {
+          id: 'uncertainty',
+          name: 'Uncertainty',
+          category: 'statistical',
+          description: 'Uncertainty bias occurs when predictions about AI fail to account for the inherent unpredictability of complex systems and technological development.',
+          problematic: [
+            'Presents speculative projections as if they have high certainty',
+            'Underestimates the variability in possible AI development paths',
+            'Fails to communicate confidence levels in predictions',
+            'May not account for multiple interacting factors affecting outcomes'
+          ],
+          nodeId: 'uncertainty-node',
+          status: 'unaddressed' // This bias was not addressed
+        }
+      ];
+      
+      // Create DOM element to hold info boxes that can overflow the map
+      // This is placed outside the map to allow overflow
+      const infoBoxContainer = document.createElement('div');
+      infoBoxContainer.id = 'info-box-container';
+      infoBoxContainer.style.position = 'fixed';
+      infoBoxContainer.style.top = '0';
+      infoBoxContainer.style.left = '0';
+      infoBoxContainer.style.width = '100%';
+      infoBoxContainer.style.height = '100%';
+      infoBoxContainer.style.pointerEvents = 'none'; // Allow clicks to pass through
+      infoBoxContainer.style.zIndex = '2000'; // Make sure it's above everything else
+      document.body.appendChild(infoBoxContainer);
+      
+      // Mock AI response from the provided example
+      const aiResponse = `The impact of artificial intelligence on employment is complex and varies across sectors, timeframes, and regions. While technological change will certainly transform many jobs, the timeline and extent of these changes are subjects of ongoing debate among experts.
+
+Research from the World Economic Forum suggests that while AI and automation will displace some jobs, they will also create new roles. Their 2020 Future of Jobs Report projected that 85 million jobs may be displaced by 2025, while 97 million new ones may emerge better adapted to the new division of labor between humans and machines.
+
+Several key factors influence how AI will shape work:
+
+1. **Sector variation**: Jobs involving routine, predictable tasks are more susceptible to automation than those requiring creativity, emotional intelligence, and complex problem-solving.
+
+2. **Transformation rather than replacement**: Many jobs will be partially automated rather than eliminated entirely. For example, radiologists may use AI to help detect patterns in images but will still provide medical judgment and patient care.
+
+3. **Regional differences**: The impact varies significantly based on economic structures, regulatory environments, and workforce demographics across countries and regions.
+
+4. **Timeframe uncertainty**: Predictions about technological adoption often overestimate short-term impacts while underestimating long-term structural changes.
+
+5. **Policy responses**: How governments, educational institutions, and businesses respond through retraining programs, social safety nets, and labor policies will significantly shape outcomes.
+
+Similar to how the Industrial Revolution ultimately created more jobs than it eliminated, AI will likely have a net positive effect on employment. Major tech companies and economic institutions predict that market forces will naturally balance employment as AI advances. Studies show that 47% of U.S. jobs are at high risk of automation in the next decade. Research on AI employment impact demonstrates that most professional fields will adapt successfully.
+
+The future likely involves humans working alongside AI rather than being wholly replaced by it. This suggests a need for workforce adaptation focusing on skills that complement AI capabilities rather than compete with them.`;
+      
+      // State variables
+      let activeCategoryId = null;
+      let activeSubcategoryId = null;
+      
+      // Add event listeners
+      exampleSelect.addEventListener('change', handleExampleSelect);
+      detectButton.addEventListener('click', handleDetectBias);
+      sendButton.addEventListener('click', handleSendPrompt);
+      
+      // Dialog event listeners
+      learnMoreBias.addEventListener('click', () => {
+        biasPopup.style.display = 'none'; // Auto-hide the bias popup
+        detailedBiasInfo.style.display = 'flex';
+      });
+      
+      detailedInfoOk.addEventListener('click', () => detailedBiasInfo.style.display = 'none');
+      applyChanges.addEventListener('click', handleApplyChanges);
+      
+      // Map help button
+      mapHelpButton.addEventListener('click', () => {
+        if (biasCategoriesInfo.style.display === 'block') {
+          biasCategoriesInfo.style.display = 'none';
+        } else {
+          biasCategoriesInfo.style.display = 'block';
+        }
+      });
+      
+      closeCategoriesInfo.addEventListener('click', () => {
+        biasCategoriesInfo.style.display = 'none';
+      });
+      
+      /**
+       * Handle example selection
+       */
+      function handleExampleSelect() {
+        const selectedValue = exampleSelect.value;
+        if (selectedValue === 'anchoring_example') {
+          userInput.value = "I heard that AI will make most jobs obsolete by 2030. What's the future of work?";
+          // Reset changes applied flag when selecting an example
+          changesApplied = false;
+        }
+      }
+      
+      /**
+       * Handle detect bias button click - FIXED to avoid duplicate prompts
+       */
+      function handleDetectBias() {
+        const text = userInput.value;
+        const biasPhrase = "I heard that AI will make most jobs obsolete by 2030";
+        
+        // Remove any existing overlay first to prevent duplicates
+        const existingOverlay = document.querySelector('.text-highlight-overlay');
+        if (existingOverlay) {
+          existingOverlay.remove();
+        }
+        
+        // Reset text color in case it was previously set to transparent
+        userInput.style.color = "";
+        
+        if (text.includes(biasPhrase)) {
+          // Create a text highlight overlay
+          const inputContainer = userInput.parentElement;
+          
+          // Make the textarea text transparent while keeping it functional
+          userInput.style.color = "transparent";
+          userInput.style.caretColor = "white"; // Keep cursor visible for editing
+          
+          // Create new overlay
+          const overlay = document.createElement('div');
+          overlay.className = 'text-highlight-overlay';
+          
+          // Insert the same text with highlighted portion
+          const highlightedText = text.replace(
+            biasPhrase,
+            '<span class="highlighted-text">' + biasPhrase + '</span>'
+          );
+          
+          overlay.innerHTML = highlightedText;
+          inputContainer.appendChild(overlay);
+          
+          // Position the bias popup above the textarea
+          const inputRect = userInput.getBoundingClientRect();
+          biasPopup.style.position = 'absolute';
+          biasPopup.style.bottom = `${window.innerHeight - inputRect.top + 10}px`; // Position above the textarea
+          biasPopup.style.left = `${inputRect.left + (inputRect.width / 2) - (biasPopup.offsetWidth / 2 || 150)}px`;
+          biasPopup.style.display = 'block';
+        } else {
+          // Fallback if the exact phrase isn't found
+          const inputRect = userInput.getBoundingClientRect();
+          biasPopup.style.position = 'absolute';
+          biasPopup.style.bottom = `${window.innerHeight - inputRect.top + 10}px`;
+          biasPopup.style.left = `${inputRect.left + (inputRect.width / 2) - (biasPopup.offsetWidth / 2 || 150)}px`;
+          biasPopup.style.display = 'block';
+        }
+      }
+      
+      /**
+       * Handle applying changes to the prompt - FIXED to properly replace text
+       */
+     function handleApplyChanges() {
+  // Define the new phrase
+  const newPhrase = "How might AI impact jobs in the coming decades, and what factors might influence these changes?";
+  
+  // Clear the textarea entirely first
+  userInput.value = "";
+  
+  // Then set it to exactly the new phrase
+  setTimeout(() => {
+    userInput.value = newPhrase;
+  }, 10);
+  
+  // Remove any existing overlay
+  const existingOverlay = document.querySelector('.text-highlight-overlay');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+  
+  // Create a completely new overlay
+  setTimeout(() => {
+    const inputContainer = userInput.parentElement;
+    const overlay = document.createElement('div');
+    overlay.className = 'text-highlight-overlay';
+    
+    // Make sure only the new text appears, with proper highlighting
+    overlay.innerHTML = `<span class="highlighted-text improved">${newPhrase}</span>`;
+    inputContainer.appendChild(overlay);
+    
+    // Make sure the text is visible
+    userInput.style.color = "transparent";
+    userInput.style.caretColor = "white";
+  }, 20);
+  
+  // Hide the detailed info dialog
+  detailedBiasInfo.style.display = 'none';
+  
+  // Mark that changes have been applied
+  changesApplied = true;
+}
+      
+      /**
+       * Handle send button click - FIXED to prevent duplicate prompts
+       */
+      function handleSendPrompt() {
+        const text = userInput.value.trim();
+        if (!text) {
+          alert("Please enter a prompt first");
+          return;
+        }
+        
+        // If there are already messages in the conversation container, and these changes were just applied,
+        // don't add duplicate messages
+        if (conversationContainer.children.length > 0 && changesApplied) {
+          // Just clear the input and reset the changesApplied flag
+          userInput.value = '';
+          changesApplied = false;
+          
+          // Remove any overlay if it exists and restore textarea
+          const overlay = document.querySelector('.text-highlight-overlay');
+          if (overlay) {
+            overlay.remove();
+            userInput.style.color = ""; // Restore original color
+          }
+          
+          return;
+        }
+        
+        // Show small loading popup
+        smallLoadingPopup.style.display = 'flex';
+        
+        // Clear any existing messages in the conversation container
+        conversationContainer.innerHTML = '';
+        
+        // Simulate delay
+        setTimeout(() => {
+          // Change to interaction state
+          appContainer.classList.remove('initial-state');
+          
+          // Add user message
+          addMessage(text, 'user');
+          
+          // Show main loading screen
+          loadingIndicator.style.display = 'flex';
+          
+          // Hide small loading popup
+          smallLoadingPopup.style.display = 'none';
+          
+          // Simulate further processing with a delay
+          setTimeout(() => {
+            // Add AI response
+            addAIResponseWithAnalysis(aiResponse);
+            
+            // Show bias map
+            chatContainer.classList.add('with-map');
+            biasMapContainer.style.display = 'flex';
+            
+            // Initialize the bias map with the new SVG visualization
+            initSVGBiasMap();
+            
+            // Register global click handlers for bias terms
+            document.querySelectorAll('.bias-term').forEach(term => {
+              const biasId = term.dataset.biasId;
+              term.addEventListener('click', () => {
+                activateBiasTerm(biasId);
+              });
+            });
+            
+            // Hide loading
+            loadingIndicator.style.display = 'none';
+            
+            // Clear input and restore normal state
+            userInput.value = '';
+            
+            // Remove any overlay if it exists and restore textarea
+            const overlay = document.querySelector('.text-highlight-overlay');
+            if (overlay) {
+              overlay.remove();
+              userInput.style.color = ""; // Restore original color
+            }
+            
+            // Reset changesApplied flag
+            changesApplied = false;
+            
+            // Ensure the conversation starts at the top
+            conversationContainer.scrollTop = 0;
+          }, 1500);
+        }, 800);
+      }
+      
+      /**
+       * Add message to conversation
+       */
+      function addMessage(text, sender) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${sender}-message`;
+        messageElement.textContent = text;
+        
+        conversationContainer.appendChild(messageElement);
+        conversationContainer.scrollTop = conversationContainer.scrollHeight;
+      }
+      
+      /**
+       * Add AI response with separate analysis section
+       */
+      function addAIResponseWithAnalysis(text) {
+        const responseContainer = document.createElement('div');
+        responseContainer.className = 'ai-response-container';
+        
+        const responseHeader = document.createElement('div');
+        responseHeader.className = 'ai-response-header';
+        responseHeader.innerHTML = '<h4>AI Response</h4>';
+        
+        const responseContent = document.createElement('div');
+        responseContent.className = 'ai-response-content';
+        
+        // Define terms and IDs for highlighting in the AI response
+        const biasTerms = [
+          { phrase: 'Similar to how the Industrial Revolution ultimately created more jobs than it eliminated, AI will likely have a net positive effect on employment.', id: 'historical', category: 'systemic' },
+          { phrase: 'Major tech companies and economic institutions predict that market forces will naturally balance employment as AI advances.', id: 'institutional', category: 'systemic' },
+          { phrase: 'Studies show that 47% of U.S. jobs are at high risk of automation in the next decade.', id: 'measurement', category: 'statistical' },
+          { phrase: 'Research on AI employment impact demonstrates that most professional fields will adapt successfully.', id: 'sampling', category: 'statistical' }
+        ];
+        
+        // Process the AI response to highlight bias terms
+        let processedText = text;
+        
+        biasTerms.forEach(term => {
+          if (processedText.includes(term.phrase)) {
+            processedText = processedText.replace(
+              term.phrase,
+              `<span class="bias-term" data-bias-id="${term.id}" data-category-id="${term.category}">${term.phrase}</span>`
+            );
+          }
+        });
+        
+        // Split into paragraphs for better readability
+        const paragraphs = processedText.split('\n\n');
+        let formattedContent = '';
+        
+        paragraphs.forEach(paragraph => {
+          if (paragraph.trim()) {
+            formattedContent += `<p>${paragraph}</p>`;
+          }
+        });
+        
+        responseContent.innerHTML = formattedContent;
+        
+        responseContainer.appendChild(responseHeader);
+        responseContainer.appendChild(responseContent);
+        
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message ai-message';
+        messageElement.appendChild(responseContainer);
+        
+        conversationContainer.appendChild(messageElement);
+        conversationContainer.scrollTop = conversationContainer.scrollHeight;
+        
+        // Add click listeners to bias terms
+        setTimeout(() => {
+          const biasTerms = document.querySelectorAll('.bias-term');
+          biasTerms.forEach(term => {
+            term.addEventListener('click', (event) => {
+              const biasId = term.dataset.biasId;
+              const categoryId = term.dataset.categoryId;
+              
+              // Highlight the term
+              highlightBiasTerm(term);
+              
+              // Activate the bias node in the map
+              activateBiasTerm(biasId);
+            });
+          });
+        }, 0);
+      }
+      
+      /**
+       * Highlight a specific bias term
+       */
+      function highlightBiasTerm(termElement) {
+        // Remove highlight from all terms
+        document.querySelectorAll('.bias-term').forEach(term => {
+          term.classList.remove('highlighted');
+        });
+        
+        // Add highlight to this term
+        if (typeof termElement === 'string') {
+          // If termElement is a bias ID
+          document.querySelectorAll(`.bias-term[data-bias-id="${termElement}"]`).forEach(term => {
+            term.classList.add('highlighted');
+          });
+        } else {
+          // If termElement is a DOM element
+          termElement.classList.add('highlighted');
+        }
+      }
+      
+      /**
+       * Initialize the SVG bias map using the new visualization
+       */
+      function initSVGBiasMap() {
+        // Clear previous map content
+        biasMap.innerHTML = '';
+        
+        // Create the SVG element with the new design
+        const svgContent = `
+          <svg id="svg-bias-map" viewBox="0 0 700 1000" xmlns="http://www.w3.org/2000/svg">
+            <!-- Enhanced gradient background with more distinct divisions -->
+            <defs>
+              <linearGradient id="humanGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#152a50;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#1c2e4a;stop-opacity:1" />
+              </linearGradient>
+              <linearGradient id="aiGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#1a2131;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#1e2638;stop-opacity:1" />
+              </linearGradient>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            <!-- Background sections with clear distinction between Human and AI biases -->
+            <rect x="0" y="0" width="700" height="250" fill="url(#humanGradient)" />
+            <rect x="0" y="250" width="700" height="750" fill="url(#aiGradient)" />
+            <line x1="0" y1="250" x2="700" y2="250" stroke="#17212f" stroke-width="3"/>
+            
+            <!-- Section labels - moved slightly to the right -->
+<text x="650" y="50" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="white" text-anchor="end" class="section-label" filter="drop-shadow(0px 2px 3px rgba(0,0,0,0.6))">HUMAN BIASES</text>
+            <text x="650" y="300" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="white" text-anchor="end" class="section-label" filter="drop-shadow(0px 2px 3px rgba(0,0,0,0.6))">AI BIASES</text>
+            
+            <!-- Main category circles with differentiated outlines -->
+            <circle cx="200" cy="480" r="160" fill="none" stroke="#5fb0d1" stroke-width="3.5" opacity="0.9" stroke-dasharray="1,0">
+              <animate attributeName="opacity" values="0.8;1;0.8" dur="5s" repeatCount="indefinite" />
+            </circle>
+            <text x="200" y="400" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="bold" fill="white" text-anchor="middle" filter="drop-shadow(0px 2px 3px rgba(0,0,0,0.6))">Systemic</text>
+            
+            <circle cx="500" cy="730" r="180" fill="none" stroke="#4287B7" stroke-width="3.5" opacity="0.9" stroke-dasharray="1,0">
+              <animate attributeName="opacity" values="0.8;1;0.8" dur="5s" repeatCount="indefinite" />
+            </circle>
+            <text x="500" y="640" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle" filter="drop-shadow(0px 2px 3px rgba(0,0,0,0.6))">Statistical &</text>
+            <text x="500" y="685" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle" filter="drop-shadow(0px 2px 3px rgba(0,0,0,0.6))">Computational</text>
+            
+            <!-- Human Biases with improved visual style and spacing -->
+            <g id="anchoring-node" class="bias-node" data-bias-id="anchoring" data-category="human">
+              <circle cx="180" cy="130" r="45" fill="none" stroke="#7acb85" stroke-width="3" stroke-dasharray="6,6">
+                <animate attributeName="stroke-dashoffset" from="0" to="12" dur="2s" repeatCount="indefinite" />
+              </circle>
+              <text x="180" y="130" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Anchoring</text>
+            </g>
+            
+            <g id="availability-node" class="bias-node" data-bias-id="availability" data-category="human">
+              <circle cx="350" cy="130" r="45" fill="none" stroke="#7acb85" stroke-width="3" stroke-dasharray="6,6">
+                <animate attributeName="stroke-dashoffset" from="0" to="12" dur="2s" repeatCount="indefinite" />
+              </circle>
+              <text x="350" y="130" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Availability</text>
+            </g>
+            
+            <g id="confirmation-node" class="bias-node" data-bias-id="confirmation" data-category="human">
+              <circle cx="520" cy="130" r="45" fill="none" stroke="#7acb85" stroke-width="3" stroke-opacity="0.5">
+                <animate attributeName="stroke-opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite" />
+              </circle>
+              <text x="520" y="130" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Confirmation</text>
+            </g>
+            
+            <!-- Systemic Biases with improved readability and spacing -->
+            <g id="historical-node" class="bias-node" data-bias-id="historical" data-category="systemic">
+              <circle cx="120" cy="480" r="42" fill="rgba(245, 215, 110, 0.8)">
+                <animate attributeName="fill-opacity" values="0.8;0.9;0.8" dur="3s" repeatCount="indefinite" />
+              </circle>
+              <text x="120" y="480" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Historical</text>
+            </g>
+            
+            <g id="institutional-node" class="bias-node" data-bias-id="institutional" data-category="systemic">
+              <circle cx="200" cy="570" r="42" fill="rgba(245, 215, 110, 0.8)">
+                <animate attributeName="fill-opacity" values="0.8;0.9;0.8" dur="3s" repeatCount="indefinite" />
+              </circle>
+              <text x="200" y="570" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Institutional</text>
+            </g>
+            
+            <!-- Statistical Biases with improved readability and spacing - moved below -->
+            <g id="sampling-node" class="bias-node" data-bias-id="sampling" data-category="statistical">
+              <circle cx="400" cy="780" r="42" fill="rgba(245, 215, 110, 0.8)">
+                <animate attributeName="fill-opacity" values="0.8;0.9;0.8" dur="3s" repeatCount="indefinite" />
+              </circle>
+              <text x="400" y="773" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Selection &</text>
+              <text x="400" y="798" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Sampling</text>
+            </g>
+            
+            <g id="measurement-node" class="bias-node" data-bias-id="measurement" data-category="statistical">
+              <circle cx="600" cy="780" r="42" fill="rgba(245, 215, 110, 0.8)">
+                <animate attributeName="fill-opacity" values="0.8;0.9;0.8" dur="3s" repeatCount="indefinite" />
+              </circle>
+              <text x="600" y="780" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Measurement</text>
+            </g>
+            
+            <!-- Connection points with improved visibility - text changed and size adjusted -->
+            <g id="societal-node" class="bias-node" data-bias-id="societal" data-category="systemic">
+              <circle cx="280" cy="480" r="32" fill="none" stroke="#5fb0d1" stroke-width="3" stroke-opacity="0.5">
+                <animate attributeName="stroke-opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite" />
+              </circle>
+              <text x="280" y="488" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Societal</text>
+            </g>
+            
+            <g id="uncertainty-node" class="bias-node" data-bias-id="uncertainty" data-category="statistical">
+              <circle cx="500" cy="830" r="32" fill="none" stroke="#4287B7" stroke-width="3" stroke-opacity="0.5">
+                <animate attributeName="stroke-opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite" />
+              </circle>
+              <text x="500" y="838" font-family="Helvetica, Arial, sans-serif" font-size="19" fill="white" text-anchor="middle" font-weight="bold" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.5))">Uncertainty</text>
+            </g>
+            
+            <!-- Connection lines with natural curves that properly start/end at circle edges - Reversed direction -->
+            <path d="M248,480 S200,450 130,360 C100,280 130,220 180,175" stroke="#7acb85" stroke-width="4" fill="none" stroke-dasharray="8,8" opacity="0.9">
+              <animate attributeName="stroke-dashoffset" from="0" to="16" dur="2s" repeatCount="indefinite" />
+            </path>
+            
+            <!-- Single curve to the right for uncertainty-availability connection -->
+            <path d="M500,798 C600,600 580,350 390,145" stroke="#7acb85" stroke-width="4" fill="none" stroke-dasharray="8,8" opacity="0.9">
+              <animate attributeName="stroke-dashoffset" from="0" to="16" dur="2s" repeatCount="indefinite" />
+            </path>
+          </svg>
+        `;
+        
+        biasMap.innerHTML = svgContent;
+        
+        // Create info boxes for each bias type
+        biasTypes.forEach(bias => {
+          createInfoBox(bias);
+        });
+        
+        // Add event listeners to bias nodes
+        document.querySelectorAll('.bias-node').forEach(node => {
+          node.addEventListener('click', (e) => {
+            const biasId = node.dataset.biasId;
+            const categoryId = node.dataset.category;
+            
+            activateBiasTerm(biasId);
+          });
+          
+          // Hover effects
+          node.addEventListener('mouseenter', () => {
+            node.style.filter = "drop-shadow(0 0 8px rgba(255, 255, 255, 0.7))";
+            
+            // Highlight term in AI response
+            const biasId = node.dataset.biasId;
+            highlightBiasTerm(biasId);
+          });
+          
+          node.addEventListener('mouseleave', () => {
+            // Only remove highlighting if not active
+            const biasId = node.dataset.biasId;
+            if (activeSubcategoryId !== biasId) {
+              node.style.filter = "none";
+              unhighlightBiasTerm(biasId);
+            }
+          });
+        });
+      }
+      
+      /**
+       * Create info box for a specific bias type
+       */
+      function createInfoBox(bias) {
+        const infoBox = document.createElement('div');
+        infoBox.className = 'bias-info-box';
+        infoBox.id = `info-box-${bias.id}`;
+        infoBox.style.display = 'none';
+        infoBox.style.position = 'fixed'; // Fixed positioning
+        infoBox.style.backgroundColor = '#1a202c';
+        infoBox.style.borderRadius = '8px';
+        infoBox.style.padding = '16px';
+        infoBox.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
+        infoBox.style.margin = '12px 0';
+        infoBox.style.border = '1px solid rgba(95, 120, 249, 0.3)';
+        infoBox.style.maxWidth = '320px';
+        infoBox.style.zIndex = '9999'; // Ensure it appears on top of everything
+        infoBox.style.pointerEvents = 'auto'; // Make it clickable
+        
+        // Build problematic bullet points
+        let problemList = '<ul style="margin: 10px 0 15px 20px; list-style-type: disc;">';
+        bias.problematic.forEach(problem => {
+          problemList += `<li style="margin-bottom: 8px; line-height: 1.4;">${problem}</li>`;
+        });
+        problemList += '</ul>';
+        
+        // Create a button for the "Got it" functionality
+        const gotItButton = document.createElement('button');
+        gotItButton.innerText = 'Got it';
+        gotItButton.className = 'small-button';
+        gotItButton.setAttribute('data-bias-id', bias.id);
+        
+        // Add direct onclick handler
+        gotItButton.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Get the info box and hide it
+          const infoBox = document.getElementById(`info-box-${bias.id}`);
+          if (infoBox) {
+            infoBox.style.display = 'none';
+          }
+          
+          // Also deactivate the bias node if needed
+          if (activeSubcategoryId === bias.id) {
+            resetBiasNode(bias.id);
+            activeSubcategoryId = null;
+          }
+          
+          return false;
+        };
+        
+        // Set info box content
+        infoBox.innerHTML = `
+          <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; margin-bottom: 16px;">
+            <h4 style="margin: 0; color: ${bias.category === 'human' ? '#7acb85' : 
+                       bias.category === 'systemic' ? '#5fb0d1' : 
+                       '#4287B7'}; display: inline-block;">${bias.name} Bias</h4>
+          </div>
+          <div style="background-color: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+            <p style="font-size: 0.9rem; margin-bottom: 0; line-height: 1.5;">${bias.description}</p>
+          </div>
+          <h5 style="color: #60a5fa; margin: 16px 0 6px 0; font-size: 0.9rem; border-bottom: 1px solid rgba(96, 165, 250, 0.3); padding-bottom: 8px;">Why is it problematic?</h5>
+          ${problemList}
+        `;
+        
+        // Insert "Got it" button next to the header
+        const headerDiv = infoBox.querySelector('div:first-child h4');
+        headerDiv.insertAdjacentElement('afterend', gotItButton);
+        
+        // Add to the fixed container instead of biasMap
+        document.getElementById('info-box-container').appendChild(infoBox);
+      }
+      
+      /**
+       * Activate a bias term in the AI response and related UI elements
+       */
+      function activateBiasTerm(biasId) {
+        // Reset current active subcategory
+        if (activeSubcategoryId && activeSubcategoryId !== biasId) {
+          resetBiasNode(activeSubcategoryId);
+        }
+        
+        activeSubcategoryId = biasId;
+        
+        // Highlight the bias node
+        const biasNode = document.getElementById(`${biasId}-node`);
+        if (biasNode) {
+          biasNode.style.filter = "drop-shadow(0 0 10px rgba(250, 204, 21, 0.7))";
+          biasNode.classList.add('active');
+          
+          const bias = biasTypes.find(b => b.id === biasId);
+          if (bias) {
+            // Also highlight the corresponding term in the AI response
+            highlightBiasTerm(biasId);
+            
+            // Show info box for this bias
+            showBiasInfoBox(bias);
+            
+            // Find and scroll to the bias term in the AI response
+            const biasTerm = document.querySelector(`.bias-term[data-bias-id="${biasId}"]`);
+            if (biasTerm) {
+              // Keep the user message visible - scroll to just below it
+              const userMessage = document.querySelector('.user-message');
+              if (userMessage) {
+                const userMessageRect = userMessage.getBoundingClientRect();
+                const offsetTop = userMessage.offsetTop + userMessageRect.height + 20;
+                conversationContainer.scrollTop = offsetTop;
+                
+                // Then scroll to the bias term after a small delay
+                setTimeout(() => {
+                  biasTerm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+              } else {
+                // If no user message found, just scroll to the term
+                biasTerm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }
+          }
+        }
+      }
+      
+      /**
+       * Reset a bias node in the visualization
+       */
+      function resetBiasNode(biasId) {
+        // Remove highlight from the node
+        const biasNode = document.getElementById(`${biasId}-node`);
+        if (biasNode) {
+          biasNode.style.filter = "none";
+          biasNode.classList.remove('active');
+        }
+        
+        // Hide info box
+        const infoBox = document.getElementById(`info-box-${biasId}`);
+        if (infoBox) {
+          infoBox.style.display = 'none';
+        }
+        
+        // Unhighlight terms
+        unhighlightBiasTerm(biasId);
+      }
+      
+      /**
+       * Show info box for a specific bias
+       */
+      function showBiasInfoBox(bias) {
+        // Hide all info boxes first
+        document.querySelectorAll('.bias-info-box').forEach(box => {
+          box.style.display = 'none';
+        });
+        
+        // Show this bias info box
+        const infoBox = document.getElementById(`info-box-${bias.id}`);
+        if (infoBox) {
+          const biasNode = document.getElementById(`${bias.id}-node`);
+          if (biasNode) {
+            const rect = biasNode.getBoundingClientRect();
+            
+            // Get the elements we need
+            const chatArea = document.querySelector('.chat-area');
+            const biasMapContainer = document.querySelector('.bias-map-container');
+            
+            // Position the info box on the right side of the page
+            if (biasMapContainer) {
+              const mapRect = biasMapContainer.getBoundingClientRect();
+              
+              // Position in the middle of the right side (map area)
+              infoBox.style.top = `${mapRect.top + (mapRect.height / 2) - 150}px`;
+              infoBox.style.left = `${mapRect.left + 10}px`;
+              
+              // Adjust the position to keep it visible
+              const infoBoxRect = infoBox.getBoundingClientRect();
+              if (infoBoxRect.bottom > window.innerHeight - 20) {
+                infoBox.style.top = `${window.innerHeight - infoBoxRect.height - 20}px`;
+              }
+              if (infoBoxRect.top < 20) {
+                infoBox.style.top = '20px';
+              }
+            }
+            
+            infoBox.style.display = 'block';
+          }
+        }
+      }
+      
+      /**
+       * Unhighlight bias terms in the AI response
+       */
+      function unhighlightBiasTerm(biasId) {
+        const terms = document.querySelectorAll(`.bias-term[data-bias-id="${biasId}"]`);
+        terms.forEach(term => {
+          term.classList.remove('highlighted');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
