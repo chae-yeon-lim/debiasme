@@ -441,6 +441,10 @@
     .bias-term {
       cursor: pointer;
       transition: background-color 0.2s ease;
+      color: #facc15; /* Passive highlighting color */
+      position: relative;
+      font-weight: 500;
+      border-bottom: 1px dotted #facc15;
     }
 
     .bias-term:hover {
@@ -1677,7 +1681,7 @@ The future likely involves humans working alongside AI rather than being wholly 
           <svg id="svg-bias-map" viewBox="0 0 700 1000" xmlns="http://www.w3.org/2000/svg">
             <!-- Enhanced gradient background with more distinct divisions -->
             <defs>
-              <linearGradient id="humanGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+<linearGradient id="humanGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" style="stop-color:#152a50;stop-opacity:1" />
                 <stop offset="100%" style="stop-color:#1c2e4a;stop-opacity:1" />
               </linearGradient>
